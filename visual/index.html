@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Local AI Multi-Agent Coder Team</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0a0e1a;
+    color: #e2e8f0;
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 32px;
+    overflow-x: hidden;
+  }
+
+  /* ── Background grid ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    margin-bottom: 52px;
+    position: relative;
+  }
+  .header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(99,102,241,0.15);
+    border: 1px solid rgba(99,102,241,0.35);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #a5b4fc;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .header h1 {
+    font-size: 42px;
+    font-weight: 900;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, #e2e8f0 0%, #a5b4fc 50%, #818cf8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.15;
+    margin-bottom: 12px;
+  }
+  .header p {
+    font-size: 16px;
+    color: #64748b;
+    font-weight: 400;
+    max-width: 560px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* ── Tech pills row ── */
+  .tech-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 52px;
+  }
+  .tech-pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(15,23,42,0.8);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 100px;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #94a3b8;
+    backdrop-filter: blur(8px);
+  }
+  .tech-pill .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── Pipeline ── */
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    width: 100%;
+    max-width: 860px;
+    position: relative;
+  }
+
+  /* ── Agent card ── */
+  .agent-card {
+    width: 100%;
+    border-radius: 20px;
+    padding: 24px 28px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    border: 1px solid transparent;
+    transition: transform 0.2s;
+  }
+  .agent-icon {
+    width: 56px; height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+  }
+  .agent-body { flex: 1; min-width: 0; }
+  .agent-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    opacity: 0.6;
+  }
+  .agent-name {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+  .agent-desc {
+    font-size: 14px;
+    color: #64748b;
+    line-height: 1.5;
+  }
+  .agent-model {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 100px;
+    padding: 5px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .model-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── Individual card themes ── */
+  .card-architect {
+    background: linear-gradient(135deg, rgba(139,92,246,0.12) 0%, rgba(99,102,241,0.06) 100%);
+    border-color: rgba(139,92,246,0.25);
+  }
+  .card-architect .agent-icon { background: rgba(139,92,246,0.2); }
+  .card-architect .agent-name { color: #c4b5fd; }
+  .card-architect .agent-label { color: #a78bfa; }
+
+  .card-coder {
+    background: linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(37,99,235,0.06) 100%);
+    border-color: rgba(59,130,246,0.25);
+  }
+  .card-coder .agent-icon { background: rgba(59,130,246,0.2); }
+  .card-coder .agent-name { color: #93c5fd; }
+  .card-coder .agent-label { color: #60a5fa; }
+
+  .card-runner {
+    background: linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(5,150,105,0.06) 100%);
+    border-color: rgba(16,185,129,0.25);
+  }
+  .card-runner .agent-icon { background: rgba(16,185,129,0.2); }
+  .card-runner .agent-name { color: #6ee7b7; }
+  .card-runner .agent-label { color: #34d399; }
+
+  .card-reviewer {
+    background: linear-gradient(135deg, rgba(245,158,11,0.12) 0%, rgba(217,119,6,0.06) 100%);
+    border-color: rgba(245,158,11,0.25);
+  }
+  .card-reviewer .agent-icon { background: rgba(245,158,11,0.2); }
+  .card-reviewer .agent-name { color: #fcd34d; }
+  .card-reviewer .agent-label { color: #fbbf24; }
+
+  .card-fixer {
+    background: linear-gradient(135deg, rgba(239,68,68,0.12) 0%, rgba(220,38,38,0.06) 100%);
+    border-color: rgba(239,68,68,0.25);
+  }
+  .card-fixer .agent-icon { background: rgba(239,68,68,0.2); }
+  .card-fixer .agent-name { color: #fca5a5; }
+  .card-fixer .agent-label { color: #f87171; }
+
+  /* ── Arrows ── */
+  .arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    padding: 6px 0;
+  }
+  .arrow-line {
+    width: 2px;
+    height: 24px;
+    background: linear-gradient(to bottom, rgba(99,102,241,0.5), rgba(99,102,241,0.2));
+  }
+  .arrow-head {
+    width: 0; height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid rgba(99,102,241,0.5);
+  }
+  .arrow-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  /* ── Fix loop bracket ── */
+  .loop-wrapper {
+    width: 100%;
+    display: flex;
+    align-items: stretch;
+    gap: 16px;
+    position: relative;
+  }
+  .loop-bar {
+    width: 4px;
+    border-radius: 4px;
+    background: linear-gradient(to bottom, rgba(245,158,11,0.6), rgba(239,68,68,0.6));
+    flex-shrink: 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .loop-bar::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 20px;
+    background: rgba(245,158,11,0.6);
+    border-radius: 4px 4px 0 0;
+  }
+  .loop-bar::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 20px;
+    background: rgba(239,68,68,0.6);
+    border-radius: 0 0 4px 4px;
+  }
+  .loop-label-vert {
+    writing-mode: vertical-lr;
+    transform: rotate(180deg);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #f59e0b;
+    position: relative;
+    z-index: 1;
+  }
+  .loop-cards { flex: 1; display: flex; flex-direction: column; gap: 0; }
+
+  /* ── Output card ── */
+  .output-card {
+    width: 100%;
+    max-width: 860px;
+    margin-top: 8px;
+    background: linear-gradient(135deg, rgba(15,23,42,0.9) 0%, rgba(30,41,59,0.6) 100%);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 20px;
+    padding: 24px 28px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .output-icon {
+    width: 56px; height: 56px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+  }
+  .output-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .file-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    padding: 3px 8px;
+    color: #64748b;
+  }
+
+  /* ── Bottom tech stack ── */
+  .stack-row {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 48px;
+    width: 100%;
+    max-width: 860px;
+  }
+  .stack-card {
+    flex: 1;
+    min-width: 140px;
+    background: rgba(15,23,42,0.8);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    padding: 20px 16px;
+    text-align: center;
+  }
+  .stack-card .icon { font-size: 28px; margin-bottom: 10px; }
+  .stack-card .name { font-size: 14px; font-weight: 700; color: #e2e8f0; margin-bottom: 4px; }
+  .stack-card .sub  { font-size: 12px; color: #475569; }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 48px;
+    font-size: 12px;
+    color: #334155;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-badge">🤖 100% Local &nbsp;·&nbsp; No API Keys &nbsp;·&nbsp; No Cloud</div>
+  <h1>Local AI Multi-Agent<br>Coder Team</h1>
+  <p>A fully offline pipeline that turns a plain-English task into a tested, reviewed, and fixed codebase — running entirely on your own hardware.</p>
+</div>
+
+<!-- Tech pills -->
+<div class="tech-row">
+  <div class="tech-pill"><span class="dot" style="background:#f59e0b"></span> Ollama</div>
+  <div class="tech-pill"><span class="dot" style="background:#8b5cf6"></span> qwen3:8b</div>
+  <div class="tech-pill"><span class="dot" style="background:#3b82f6"></span> qwen2.5-coder:14b</div>
+  <div class="tech-pill"><span class="dot" style="background:#10b981"></span> Python 3.9+</div>
+  <div class="tech-pill"><span class="dot" style="background:#6366f1"></span> FastAPI · Express · React · CLI</div>
+</div>
+
+<!-- Pipeline -->
+<div class="pipeline">
+
+  <!-- Architect -->
+  <div class="agent-card card-architect">
+    <div class="agent-icon">🏛️</div>
+    <div class="agent-body">
+      <div class="agent-label">Stage 1 — Planning</div>
+      <div class="agent-name">Architect</div>
+      <div class="agent-desc">Produces file structure, implementation steps, dependencies, and test plan. No code written here.</div>
+    </div>
+    <div class="agent-model">
+      <span class="model-dot" style="background:#8b5cf6"></span>
+      qwen3:8b
+    </div>
+  </div>
+
+  <div class="arrow">
+    <div class="arrow-line"></div>
+    <div class="arrow-head"></div>
+    <div class="arrow-label">architecture plan</div>
+  </div>
+
+  <!-- Coder -->
+  <div class="agent-card card-coder">
+    <div class="agent-icon">💻</div>
+    <div class="agent-body">
+      <div class="agent-label">Stage 2 — Code Generation</div>
+      <div class="agent-name">Coder</div>
+      <div class="agent-desc">Writes all files as structured JSON. Large projects split across multiple chunked passes — no truncation.</div>
+    </div>
+    <div class="agent-model">
+      <span class="model-dot" style="background:#3b82f6"></span>
+      qwen2.5-coder:14b
+    </div>
+  </div>
+
+  <div class="arrow">
+    <div class="arrow-line"></div>
+    <div class="arrow-head"></div>
+    <div class="arrow-label">files written to disk</div>
+  </div>
+
+  <!-- Runner -->
+  <div class="agent-card card-runner">
+    <div class="agent-icon">▶️</div>
+    <div class="agent-body">
+      <div class="agent-label">Stage 3 — Auto-Run & Test</div>
+      <div class="agent-name">Runner</div>
+      <div class="agent-desc">Detects project type (Python · Node · Go · Shell), installs dependencies, and runs the test suite automatically.</div>
+    </div>
+    <div class="agent-model" style="color:#34d399">
+      <span class="model-dot" style="background:#10b981"></span>
+      subprocess
+    </div>
+  </div>
+
+  <div class="arrow">
+    <div class="arrow-line"></div>
+    <div class="arrow-head"></div>
+    <div class="arrow-label">test results</div>
+  </div>
+
+  <!-- Review + Fix loop -->
+  <div class="loop-wrapper">
+    <div class="loop-bar">
+      <span class="loop-label-vert">Fix Loop</span>
+    </div>
+    <div class="loop-cards">
+
+      <!-- Reviewer -->
+      <div class="agent-card card-reviewer">
+        <div class="agent-icon">🔍</div>
+        <div class="agent-body">
+          <div class="agent-label">Stage 4 — Code Review</div>
+          <div class="agent-name">Reviewer</div>
+          <div class="agent-desc">Reads actual file contents. Checks for bugs, security issues, missing error handling, and style. Outputs PASS · PASS WITH NOTES · NEEDS REVISION.</div>
+        </div>
+        <div class="agent-model">
+          <span class="model-dot" style="background:#3b82f6"></span>
+          qwen2.5-coder:14b
+        </div>
+      </div>
+
+      <div class="arrow">
+        <div class="arrow-line" style="background:linear-gradient(to bottom,rgba(239,68,68,0.5),rgba(239,68,68,0.2))"></div>
+        <div class="arrow-head" style="border-top-color:rgba(239,68,68,0.5)"></div>
+        <div class="arrow-label" style="color:#ef4444">needs revision</div>
+      </div>
+
+      <!-- Fixer -->
+      <div class="agent-card card-fixer">
+        <div class="agent-icon">🔧</div>
+        <div class="agent-body">
+          <div class="agent-label">Stage 5 — Bug Fix</div>
+          <div class="agent-name">Fixer</div>
+          <div class="agent-desc">Receives the review + current files + fix history. Only rewrites files that need changes. Loops back to Reviewer until PASS or cap reached.</div>
+        </div>
+        <div class="agent-model">
+          <span class="model-dot" style="background:#3b82f6"></span>
+          qwen2.5-coder:14b
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="arrow">
+    <div class="arrow-line" style="background:linear-gradient(to bottom,rgba(16,185,129,0.5),rgba(16,185,129,0.2))"></div>
+    <div class="arrow-head" style="border-top-color:rgba(16,185,129,0.5)"></div>
+    <div class="arrow-label" style="color:#10b981">✅ pass</div>
+  </div>
+
+  <!-- Output -->
+  <div class="output-card">
+    <div class="output-icon">📁</div>
+    <div class="agent-body">
+      <div class="agent-name" style="font-size:18px;color:#e2e8f0">Generated Project</div>
+      <div class="agent-desc">Complete, tested codebase written to <code style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#a5b4fc">output/&lt;project-name&gt;/</code></div>
+      <div class="output-files">
+        <span class="file-chip">src/main.py</span>
+        <span class="file-chip">src/models.py</span>
+        <span class="file-chip">tests/test_main.py</span>
+        <span class="file-chip">requirements.txt</span>
+        <span class="file-chip">README.md</span>
+        <span class="file-chip">REVIEW.md</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Stack cards -->
+<div class="stack-row">
+  <div class="stack-card">
+    <div class="icon">🦙</div>
+    <div class="name">Ollama</div>
+    <div class="sub">Local model runtime</div>
+  </div>
+  <div class="stack-card">
+    <div class="icon">🧠</div>
+    <div class="name">qwen3:8b</div>
+    <div class="sub">Architect agent</div>
+  </div>
+  <div class="stack-card">
+    <div class="icon">⚡</div>
+    <div class="name">qwen2.5-coder:14b</div>
+    <div class="sub">Coder · Reviewer · Fixer</div>
+  </div>
+  <div class="stack-card">
+    <div class="icon">🐍</div>
+    <div class="name">Python 3.9+</div>
+    <div class="sub">Pipeline & orchestration</div>
+  </div>
+  <div class="stack-card">
+    <div class="icon">🔒</div>
+    <div class="name">100% Offline</div>
+    <div class="sub">No API keys needed</div>
+  </div>
+</div>
+
+<div class="footer">github.com/siliney/Ai_Multi_Agent_Coder_Local_Models</div>
+
+</body>
+</html>
