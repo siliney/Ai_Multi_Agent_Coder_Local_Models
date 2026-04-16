@@ -36,7 +36,8 @@ def write_project(coder_output: str, base_dir: str = "output") -> tuple[str, lis
         content = entry.get("content", "")
         if not relative_path:
             continue
-        full_path = os.path.join(project_path, relative_path)
+        # normpath handles both forward and back slashes on Windows
+        full_path = os.path.normpath(os.path.join(project_path, relative_path))
         os.makedirs(os.path.dirname(full_path) or project_path, exist_ok=True)
         with open(full_path, "w", encoding="utf-8") as f:
             f.write(content)

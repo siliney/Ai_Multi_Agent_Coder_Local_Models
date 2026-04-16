@@ -1,11 +1,27 @@
 # pipeline.py
 
 import os
+import json as _json
 import ollama
 from agents import AGENTS
-from file_writer import write_project
+from file_writer import write_project, extract_json
 from chunker import estimate_file_count, build_chunk_prompts, CHUNK_THRESHOLD
 from runner import auto_run, format_run_results
+
+
+def _normrel(path: str, base: str) -> str:
+    """Normalised relative path — case-folded, separator-agnostic."""
+    return os.path.normcase(os.path.normpath(os.path.relpath(path, base)))
+
+
+def _force_write(fixer_output: str, project_name: str, output_dir: str):
+    """
+    Parse fixer JSON, force the correct project_name, then write.
+    Prevents project-name drift creating a parallel output directory.
+    """
+    data = extract_json(fixer_output)
+    data["project_name"] = project_name          # always use the original name
+    return write_project(_json.dumps(data), base_dir=output_dir)
 
 
 # ── Helpers ────────────────────────────────────────────────
@@ -296,7 +312,8 @@ def _fix_loop(
         MAX_FILE_CHARS = 1500
         current_files_content = []
         for f in all_written_files[:20]:
-            rel = os.path.relpath(f, original_project_path)
+            # Always use forward slashes — LLMs are trained on Unix paths
+            rel = os.path.relpath(f, original_project_path).replace(os.sep, "/")
             try:
                 with open(f, encoding="utf-8") as fh:
                     raw = fh.read()
@@ -346,11 +363,13 @@ def _fix_loop(
         write_ok = False
         for attempt in range(2):
             try:
-                _, written = write_project(fixer_output, base_dir=output_dir)
-                written_rels = {os.path.relpath(f, original_project_path) for f in written}
+                # _force_write patches project_name before writing — prevents new dir creation
+                _, written = _force_write(fixer_output, project_name, output_dir)
+                # Normalised comparison handles / vs \ and case differences on Windows
+                written_rels = {_normrel(f, original_project_path) for f in written}
                 all_written_files = [
                     f for f in all_written_files
-                    if os.path.relpath(f, original_project_path) not in written_rels
+                    if _normrel(f, original_project_path) not in written_rels
                 ] + written
                 write_ok = True
                 break
